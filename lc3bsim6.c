@@ -951,7 +951,7 @@ void MEM_stage() {
   int WE0 = 0;
   int WE1 = 0;
   int dcache_r=0;
-  if(DCACHE_EN == 1)
+  if(DCACHE_EN == 1 && PS.MEM_V)
   {
   	if(DCACHE_RW!=0)
   	{
@@ -980,8 +980,18 @@ void MEM_stage() {
   	{
   		mem_stall=1;
   	}
+  	
   }
-
+  
+  /*logic for generating MEM.PCMUX*/
+  if(PS.MEM_V==1)
+  {
+  	/*if a valid memory instruction*/
+  }
+  else
+  {
+  	
+  }
   
   /* The code below propagates the control signals from MEM.CS latch
      to SR.CS latch. You still need to latch other values into the
