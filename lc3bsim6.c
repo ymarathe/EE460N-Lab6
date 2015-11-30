@@ -950,6 +950,7 @@ void MEM_stage() {
   int DATA_SIZE = Get_DATA_SIZE(PS.MEM_CS);
   int WE0 = 0;
   int WE1 = 0;
+  int dcache_r=0;
   if(DCACHE_EN == 1)
   {
   	if(DCACHE_RW!=0)
@@ -963,12 +964,23 @@ void MEM_stage() {
   		else
   		{
   			/*writing a single byte*/
+  			if((PS.MEM_ADDRESS & 0x01) == 1)
+  			{
+  				WE1=1;
+  			}
+  			else
+  			{
+  				WE0=1;
+  			}
   		}
   	}
   	int readData;
   	dcache_access(PS.MEM_ADDRESS, readData, PS.MEM_ALU_RESULT, dcache_r, WE0, WE1);
+  	if(dcache_r==0)
+  	{
+  		mem_stall=1;
+  	}
   }
-  
 
   
   /* The code below propagates the control signals from MEM.CS latch
