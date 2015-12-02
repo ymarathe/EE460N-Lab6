@@ -995,15 +995,37 @@ void MEM_stage() {
   	}
   	
   }
-  
-  /*logic for generating MEM.PCMUX*/
+  int BR_OP = Get_BR_OP(PS.MEM_CS);
+  int UNCON_OP = Get_UNCOND_OP(PS.MEM_CS);
+  int TRAP_OP = Get_TRAP_OP(PS.MEM_CS);
+  /*logic for generating MEM_PCMUX*/
   if(PS.MEM_V==1)
   {
   	/*if a valid memory instruction*/
+  	if(BR_OP==1)
+  	{
+  		/*branch instruction, need to check what type of branch and condition codes*/
+  	}
+  	else if(UNCON_OP==1)
+  	{
+  		/*jmp or jsr(r) insruction*/
+  		MEM_PCMUX = 1;
+  	}
+  	else if(TRAP_OP==1)
+  	{
+  		/*trap instruction*/
+  		MEM_PCMUX = 2;
+  	}
+  	else
+  	{
+  		/*non control-flow instruction*/
+  		MEM_PCMUX = 0;
+  	}
   }
   else
   {
-  	
+  	/*instruction is invalid, ie a stall???, so PC won't be loaded anyway?*/
+  	MEM_PCMUX=0;
   }
   
   /* The code below propagates the control signals from MEM.CS latch
