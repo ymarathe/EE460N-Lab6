@@ -1005,6 +1005,77 @@ void MEM_stage() {
   	if(BR_OP==1)
   	{
   		/*branch instruction, need to check what type of branch and condition codes*/
+  		/*NZP*/
+  		int brInstr = (PS.MEM_IR >> 9) & 0x7;
+  		switch(brInstr)
+  		{
+  			case 0:
+  				MEM_PCMUX = 0;
+  				break;
+  			case 1:
+  				if((PS.MEM_CC & 0x1) !=0)
+  				{
+  					MEM_PCMUX = 1;
+  				}
+  				else
+  				{
+  					MEM_PCMUX = 0;
+  				}
+  				break;
+  			case 2:
+  				if((PS.MEM_CC & 0x2) !=0)
+  				{
+  					MEM_PCMUX = 1;
+  				}
+  				else
+  				{
+  					MEM_PCMUX = 0;
+  				}
+  				break;
+  			case 3:
+  				if((PS.MEM_CC & 0x3) !=0)
+  				{
+  					MEM_PCMUX = 1;
+  				}
+  				else
+  				{
+  					MEM_PCMUX = 0;
+  				}
+  				break;
+  			case 4:
+  				if((PS.MEM_CC & 0x4) !=0)
+  				{
+  					MEM_PCMUX = 1;
+  				}
+  				else
+  				{
+  					MEM_PCMUX = 0;
+  				}
+  				break;
+  			case 5:
+  				if((PS.MEM_CC & 0x5) !=0)
+  				{
+  					MEM_PCMUX = 1;
+  				}
+  				else
+  				{
+  					MEM_PCMUX = 0;
+  				}
+  				break;
+  			case 6:
+  				if((PS.MEM_CC & 0x6) !=0)
+  				{
+  					MEM_PCMUX = 1;
+  				}
+  				else
+  				{
+  					MEM_PCMUX = 0;
+  				}
+  				break;
+  			case 7:
+  				MEM_PCMUX = 0;
+  				break;
+  		}
   	}
   	else if(UNCON_OP==1)
   	{
