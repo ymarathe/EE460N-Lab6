@@ -974,11 +974,24 @@ void MEM_stage() {
   			}
   		}
   	}
+  	/*need to do sign extending and shiftinh for full word accesses???*/
   	int readData;
   	dcache_access(PS.MEM_ADDRESS, readData, PS.MEM_ALU_RESULT, dcache_r, WE0, WE1);
   	if(dcache_r==0)
   	{
   		mem_stall=1;
+  	}
+  	else
+  	{
+  		if(DATA_SIZE==0 && DCACHE_RW==0)
+  		{
+  			//need to sign extend data
+  			if((dcache_r & 0x80) != 0)
+  			{
+  				//was a negative number, need to sign extend, check if this correct way to sign extend??
+  				dcache_r = 0xFF00 + dcache_r;
+  			}
+  		}
   	}
   	
   }
