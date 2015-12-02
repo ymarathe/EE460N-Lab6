@@ -1153,15 +1153,34 @@ void MEM_stage() {
 
 
 /************************* AGEX_stage() *************************/
+int v_agex_ld_cc = 0;
+int v_agex_ld_reg = 0;
 void AGEX_stage() {
 
   int ii, jj = 0;
   int LD_MEM; /* You need to write code to compute the value of LD.MEM
 		 signal */
+		 
+  /*load memory latches as long as valid instruction in AGEX stage?*/
+  if(PS.AGEX_V == 1)
+  {
+  	/*should load mem latches?*/
+  	LD_MEM = 1;
+  }
+  else
+  {
+  	/*definitely shouldn't load mem latches*/
+  	LD_MEM = 0;
+  }
 
   /* your code for AGEX stage goes here */
-
+  int LD_CC = Get_AGEX_LD_CC(PS.AGEX_CS);
+  int LD_REG = Get_AGEX_LD_REG(PS.AGEX_CS);
+  int BR_STALL = Get_AGEX_BR_STALL(PS.AGEX_CS);
   
+  v_agex_ld_cc = LD_CC;
+  v_agex_ld_reg = LD_REG;
+  v_agex_br_stall = BR_STALL;
 
   if (LD_MEM) {
     /* Your code for latching into MEM latches goes here */
