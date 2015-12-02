@@ -939,6 +939,8 @@ void SR_stage() {
 }
 
 int MEM_PCMUX;
+int v_mem_ld_cc = 0;
+int v_mem_ld_reg = 0;
 /************************* MEM_stage() *************************/
 void MEM_stage() {
 
@@ -980,9 +982,11 @@ void MEM_stage() {
   	if(dcache_r==0)
   	{
   		mem_stall=1;
+  		NEW_PS.SR_V = 0;
   	}
   	else
   	{
+  		NEW_PS.SR_V = 1;
   		if(DATA_SIZE==0 && DCACHE_RW==0)
   		{
   			//need to sign extend data
@@ -992,16 +996,34 @@ void MEM_stage() {
   				dcache_r = 0xFF00 + dcache_r;
   			}
   		}
+  		/*need to put read data into SR_DATA???*/
+  		if(DCACHE_RW==0)
+  		{
+  			NEW_PS.SR_DATA = readData;
+  		}
+  		
   	}
   	
   }
   int BR_OP = Get_BR_OP(PS.MEM_CS);
   int UNCON_OP = Get_UNCOND_OP(PS.MEM_CS);
   int TRAP_OP = Get_TRAP_OP(PS.MEM_CS);
+  int BR_STALL = Get_MEM_BR_STALL(PS.MEM_CS);
+  int LD_CC = Get_MEM_LD_CC(PS.MEM_CS);
+  int LD_REG = Get_MEM_LD_REG(PS.MEM_CS);
+  
   /*logic for generating MEM_PCMUX*/
   if(PS.MEM_V==1)
   {
   	/*if a valid memory instruction*/
+  	if(BR_STALL==1)
+  	{
+  		v_mem_br_stall = 1;
+  	}
+  	else
+  	{
+  		v_mem_br_stall = 0;
+  	}
   	if(BR_OP==1)
   	{
   		/*branch instruction, need to check what type of branch and condition codes*/
@@ -1092,11 +1114,32 @@ void MEM_stage() {
   		/*non control-flow instruction*/
   		MEM_PCMUX = 0;
   	}
+  	
+  	if(LD_REG == 1)
+  	{
+  		v_mem_ld_reg = 1;
+  	}
+  	else
+  	{
+  		v_mem_ld_reg = 0;
+  	}
+  	
+  	if(LD_CC == 1)
+  	{
+  		v_mem_ld_cc = 1;	
+  	}
+  	else
+  	{
+  		v_mem_ld_cc = 0;
+  	}
   }
   else
   {
-  	/*instruction is invalid, ie a stall???, so PC won't be loaded anyway?*/
+  	/*instruction is invalid, ie a bubble???, so PC won't be loaded anyway?*/
   	MEM_PCMUX=0;
+  	v_mem_br_stall = 0;
+  	v_mem_ld_cc = 0;
+  	v_mem_ld_reg = 0;
   }
   
   /* The code below propagates the control signals from MEM.CS latch
