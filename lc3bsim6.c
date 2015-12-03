@@ -1384,7 +1384,7 @@ void DE_stage() {
   {
   	drId = (ir >> 9) & 0x7;
   }
-  else if(drMUc == 1)
+  else if(drMux == 1)
   {
   	drId = 7;
   }
@@ -1405,7 +1405,20 @@ void DE_stage() {
   		if(Get_UNCOND_OP(CONTROL_STORE[CONTROL_STORE_ADDRESS]) != 1)
   		{
   			/*conditional branch, need to check if any depencies on condition codes in further stages*/
-  			
+  			if(Get_AGEX_LD_CC(PS.AGEX_CS)==1 || Get_MEM_LD_CC(PS.MEM_CS)==1 || Get_SR_LD_CC(PS.SR_CS)==1)
+  			{
+  				/*depends on condition codes from further stage*/
+  				dep_stall=1;
+  				agexV=0;
+  				LD_AGEX=1;
+  			}
+  			else
+  			{
+  				/*no dependencies on conditional codes*/
+  				dep_stall=0;
+  				agexV=1;
+  				LD_AGEX=1
+  			}
   		}
   		else
   		{
@@ -1422,7 +1435,7 @@ void DE_stage() {
   		if(needSR1 == 1)
   		{
   			/*DE needs SR1*/
-  			if((PD.AGEX_DRID == SR1Id && Get_AGEX_LD_REG(PS.AGEX_CS)) || (PS.MEM_DRID == SR1Id && Get_MEM_LD_REG(PS.MEM_CS)) || (PS.SR_DRID == SR1Id && Get_SR_LD_REG(PS.SR_CS)))
+  			if((PS.AGEX_DRID == SR1Id && Get_AGEX_LD_REG(PS.AGEX_CS)==1) || (PS.MEM_DRID == SR1Id && Get_MEM_LD_REG(PS.MEM_CS)==1) || (PS.SR_DRID == SR1Id && Get_SR_LD_REG(PS.SR_CS)==1))
   			{
   				/*another stage will be writing to SR1, add dependency bubble*/
   				dep_stall = 1;
@@ -1432,7 +1445,7 @@ void DE_stage() {
   			else if(needSR2 == 1)
   			{
   				/*no dependency on SR1, DE needs SR2*/
-  				if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)))
+  				if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)==1) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)==1) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)==1))
   				{
   					/*another stage will be writing to SR2, add dependency bubble*/
   					dep_stall = 1;
@@ -1458,7 +1471,7 @@ void DE_stage() {
   		else if(needSR2 == 1)
   		{
   			/*DE needs SR2*/
-  			if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)))
+  			if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)==1) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)==1) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)==1))
   			{
   				/*another stage will write to SR2, add dependency bubble*/
   				dep_stall = 1;
