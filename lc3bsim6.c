@@ -941,6 +941,8 @@ void SR_stage() {
 int MEM_PCMUX;
 int v_mem_ld_cc = 0;
 int v_mem_ld_reg = 0;
+int target_pc;
+int trap_pc;
 /************************* MEM_stage() *************************/
 void MEM_stage() {
 
@@ -953,6 +955,7 @@ void MEM_stage() {
   int WE0 = 0;
   int WE1 = 0;
   int dcache_r=0;
+  target_pc = PS.MEM_ADDRESS;
   if(DCACHE_EN == 1 && PS.MEM_V)
   {
   	if(DCACHE_RW!=0)
@@ -1005,6 +1008,10 @@ void MEM_stage() {
   	}
   	
   }
+  else if(PS.MEM_V == 1)
+  {
+  	NEW_PS.SR_V = 1;
+  }
   int BR_OP = Get_BR_OP(PS.MEM_CS);
   int UNCON_OP = Get_UNCOND_OP(PS.MEM_CS);
   int TRAP_OP = Get_TRAP_OP(PS.MEM_CS);
@@ -1024,6 +1031,7 @@ void MEM_stage() {
   	{
   		v_mem_br_stall = 0;
   	}
+  	
   	if(BR_OP==1)
   	{
   		/*branch instruction, need to check what type of branch and condition codes*/
@@ -1108,6 +1116,7 @@ void MEM_stage() {
   	{
   		/*trap instruction*/
   		MEM_PCMUX = 2;
+  		trap_pc = readData
   	}
   	else
   	{
@@ -1145,6 +1154,12 @@ void MEM_stage() {
   /* The code below propagates the control signals from MEM.CS latch
      to SR.CS latch. You still need to latch other values into the
      other SR latches. */
+     NEW_PS.SR_ADDRESS = PS.MEM_ADDRESS;
+     NEW_PS.SR_DATA = readData;
+     NEW_PS.SR_NPC = PS.MEM_NPC;
+     NEW_PS.SR_ALU_RESULT = PS.MEM_ALU_RESULT;
+     NEW_PS.SR_IR = PS.MEM_IR;
+     NEW_PS.SR_DRID = PS.MEM_DRID;
   for (ii=COPY_SR_CS_START; ii < NUM_MEM_CS_BITS; ii++) {
     NEW_PS.SR_CS [jj++] = PS.MEM_CS [ii];
   }
