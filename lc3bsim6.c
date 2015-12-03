@@ -1368,29 +1368,15 @@ void DE_stage() {
   CONTROL_STORE_ADDRESS = ((ir >> 10) & 0x3E) + ((ir >> 5) & 0x1);
   
   int ii, jj = 0;
+  int agexV;
   int LD_AGEX; /* You need to write code to compute the value of
 		  LD.AGEX signal */
 
   /* your code for DE stage goes here */
-  if(PS.DE_V == 0)
-  {
-  	LD_AGEX=0
-  }
-  else
-  {
-  	if(Get_DE_BR_STALL(CONTROL_STORE[CONTROL_STORE_ADDRESS]) == 1)
-  	{
-  		v_de_br_stall=1;
-  	}
-  	else
-  	{
-  		v_de_br_stall=0;
-  	}
-  }
   int needSR1 = Get_SR1_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
   int SR1Id = (ir >> 6) & 0x7;
-  int need SR2 = Get_SR2_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
-  int SR2IdMux;
+  int needSR2 = Get_SR2_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
+  int SR2IdMux; /*use IR[13]*/
   int SR2Id;
   int drMux = Get_DRMUX(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
   int drId;
@@ -1402,7 +1388,101 @@ void DE_stage() {
   {
   	drId = 7;
   }
-
+  
+  if(PS.DE_V == 0)
+  {
+  	/*currently holds a bubble, pass on that bubble*/
+  	LD_AGEX=1;
+  	agexV = 0;
+  }
+  else
+  {
+  	/*not a bubble*/
+  	if(Get_DE_BR_STALL(CONTROL_STORE[CONTROL_STORE_ADDRESS]) == 1)
+  	{
+  		/*is a valid branch instruction*/
+  		v_de_br_stall=1;
+  		if(Get_UNCOND_OP(CONTROL_STORE[CONTROL_STORE_ADDRESS]) != 1)
+  		{
+  			/*conditional branch, need to check if any depencies on condition codes in further stages*/
+  			
+  		}
+  		else
+  		{
+  			/*unconditional branch, pass on branch values to the AGEX stage*/
+  			dep_stall=0;
+  			agexV=1;
+  			LD_AGEX=1;
+  		}
+  	}
+  	else
+  	{
+  		/*is a valid non-branch instruction*/
+  		v_de_br_stall=0;
+  		if(needSR1 == 1)
+  		{
+  			/*DE needs SR1*/
+  			if((PD.AGEX_DRID == SR1Id && Get_AGEX_LD_REG(PS.AGEX_CS)) || (PS.MEM_DRID == SR1Id && Get_MEM_LD_REG(PS.MEM_CS)) || (PS.SR_DRID == SR1Id && Get_SR_LD_REG(PS.SR_CS)))
+  			{
+  				/*another stage will be writing to SR1, add dependency bubble*/
+  				dep_stall = 1;
+  				LD_AGEX = 1;
+  				agexV = 0;
+  			}
+  			else if(needSR2 == 1)
+  			{
+  				/*no dependency on SR1, DE needs SR2*/
+  				if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)))
+  				{
+  					/*another stage will be writing to SR2, add dependency bubble*/
+  					dep_stall = 1;
+  					LD_AGEX=1;
+  					agexV=0;
+  				}
+  				else
+  				{
+  					/*no dependency on SR2*/
+  					dep_stall = 0;
+  					LD_AGEX = 1;
+  					agexV = 1;
+  				}
+  			}
+  			else if(needSR2 == 0)
+  			{
+  				/*no dependency on SR1, DE doesn't need SR2*/
+  				dep_stall = 0;
+  				LD_AGEX = 1;
+  				agexV = 1;
+  			}
+  		}
+  		else if(needSR2 == 1)
+  		{
+  			/*DE needs SR2*/
+  			if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)))
+  			{
+  				/*another stage will write to SR2, add dependency bubble*/
+  				dep_stall = 1;
+  				LD_AGEX=1;
+  				agexV=0;
+  			}
+  			else
+  			{
+  				/*no dependency on SR2*/
+  				dep_stall = 0;
+  				LD_AGEX = 1;
+  				agexV = 1;
+  			}
+  		}
+  		else
+  		{
+  			/*DE doesn;t need SR1 or SR2*/
+  			dep_stall = 0;
+  			LD_AGEX=1;
+  			agexV=1;	
+  		}
+  		
+  	}
+  }
 
 
   if (LD_AGEX) {
@@ -1413,6 +1493,7 @@ void DE_stage() {
     NEW_PS.AGEX_SR1 = REGS[SR1Id];
     NEW_PS.AGEX_SR2 = REGS[SR2ID];
     NEW_PS.AGEX_CC = P + (Z << 1) + (N << 2);
+    NEW_PS.AGEX_V = agexV;
 
 
 
