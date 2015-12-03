@@ -1530,10 +1530,10 @@ void FETCH_stage() {
   /*if DE, MEM, or AGEX have valid control instruction,  DE.V = 0*/
 
   /*need to generate LD.PC and LD.DE*/
-  int LD_PC=1;
-  int LD_DE=1;
+  int LD_PC;
+  int LD_DE;
   int pcmux_res;
-  int DEVal=1;
+  int DEVal;
   switch(MEM_PCMUX)
   {
   	/*PC=PC+2*/
@@ -1542,49 +1542,65 @@ void FETCH_stage() {
   	 break;
   	/*PC=TARGET.PC*/
   	case 1:
-  	 pcmux_res = MEM_TARGET_PC;
+  	 pcmux_res = taget_pc;
   	 break;
   	/*PC=TRAP.PC*/
   	case 2:
-  	 pcmux_res = MEM_TRAP_PC;
+  	 pcmux_res = trap_pc;
   	 break;
   }
-   int oldPC = PC;
+  int instr = 0;
+  icache_access(PC,&instr,&icache_r);
   if(v_de_br_stall==1 || v_agex_br_stall==1 || v_mem_br_stall==1)
   {
-  	/*need to stall because of contol instruction farther down the pipeline*/
+  	/*Fetch not able to progress*/
+  	/*need to stall because of contol instruction farther down the pipeline, load DE with a bubble*/
   	DEVal=0;
+  	LD_DE=1;
   	/*since stalling, won't process instr from updated PC, can't load PC*/
   	LD_PC=0;
   }
-  if(icache_r==0)
+  else if(icache_r==0)
   {
-  	/*wasn't able to get previous instruction from icache, need to fetch again*/
+  	/*Fetch not able to progress
+  	wasn't able to get previous instruction from icache, need to stall and fetch again, load DE with a bubble*/
+  	DEVal=0;
+  	LD_DE=1;
+  	/*since stalling, won't process instr from updated PC, can't load PC*/
   	LD_PC=0;
   }
-  int instr;
-  /*need something here to find value of LD_DE*/
-  if()
+  else if(dep_stall==1)
   {
+  	/*DE isn't able to progress, don't load it with anything and don't fetch anything new*/
   	LD_DE=0;
+  	LD_PC=0
+  	DEVal=0;
   }
-  /*if DE latches not loaded, can't load PC either because will skip an instruction by mistake*/
-  if(LD_PC==1 && LD_DE==1)
+  else if(mem_stall==1)
   {
-  	PC=pcmux_res;
-  	icache_access(PC,&instr,&icache_r);
-  	if(icache_r==0)
-  	{
-  		DEVal=0;
-  	}
+  	/*memory not able to progress, don't load DE with anything and don't fetch anything new*/
+  	LD_DE=0;
+  	LD_PC=0;
+  	DEVal=0;
+  }
+  else
+  {
+  	/*everyone is able to make progress*/
+  	LD_DE=1;
+  	LD_PC=1;
+  	DEVal=1;
   }
   
+  if(LD_PC==1)
+  {
+  	PC=pcmux_res;
+  }
   if(LD_DE==1)
   {
   	/*need to check if should be oldPC + 2 or PC + 2*/
-  	NEXT_PS.DE_NPC = oldPC + 2;
-  	NEXT_PS.DE_IR = instr;
-  	NEXt_PS.DE_V = DEVal;
+  	NEW_PS.DE_NPC = PC;
+  	NEW_PS.DE_IR = instr;
+  	NEW_PS.DE_V = DEVal;
   }
 }  
 
