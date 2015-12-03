@@ -1243,11 +1243,79 @@ void AGEX_stage() {
   {
   	address = addrRes;
   }
+  
   int SR1 = PS.AGEX_SR1;
-  int SR2 = PS.AGEX_SR2;
+  int SR2;
+  int sr2Mux = Get_SR2MUX(PS.AGEX_CS);
+  if(sr2Mux == 0)
+  {
+  	/*SR2*/
+  	SR2 = PS.AGEX_SR2;
+  }
+  else if(sr2Mux == 1)
+  {
+  	/*IR[4:0]*/
+  	SR2 = ir & 0x1F;
+  }
+  int ALUK = Get_ALUK(PS.AGEX_CS);
+  int aluOpRes;
+  if(ALUK == 0)
+  {
+  	/*add*/
+  	aluOpRes = Low16bits(SR1 + SR2);
+  }
+  else if(ALUK == 1)
+  {
+  	/*and*/
+  	aluOpRes = Low16bits(SR1 & SR2);
+  }
+  else if(ALUK == 2)
+  {
+  	/*xor*/
+  	aluOpRes = Low16bits(SR1 ^ SR2);
+  }
+  else if(ALUK == 3)
+  {
+  	/*PASSB ???*/
+  }
+  
+  int aluResMux = Get_ALU_RESULTMUX(PS.AGEX_CS);
+  int aluRes;
+  if(aluResMux == 0)
+  {
+  	/*shifter*/
+  	int shftAmount = ir & 0xF;
+  	int shftType = (ir >> 4) & 0x3;
+  	if(shftType == 0)
+  	{
+  		/*left shift*/
+  		aluRes = Low16bits(SR1 << shftAmount);
+  	}
+  	else if(shftType == 1)
+  	{
+  		/*right shift logical*/
+  		aluRes = Low16bits(SR1 >> shftAmount);
+  	}
+  	else if(shftType == 3)
+  	{
+  		/*right shift arithmetic*/
+  		aluRes = Low16bits(SR1 >> shftAmount);
+  		if((SR1 & 0x8000) != 0)
+  		{
+  			/*need do something to make it an arithmetic shift*/
+  		}
+  	}
+  }
+  else if(aluResMux == 1)
+  {
+  	/*ALU*/
+  	aluRes = aluOpRes;
+  }
   
   
   
+  
+   
   
   /*2nd logic block*/
   int LD_CC = Get_AGEX_LD_CC(PS.AGEX_CS);
@@ -1260,7 +1328,13 @@ void AGEX_stage() {
 
   if (LD_MEM) {
     /* Your code for latching into MEM latches goes here */
-    
+    NEW_PS.MEM_ADDRESS = address;
+    NEW_PS.MEM_NPC = PS.AGEX_NPC;
+    NEW_PS.MEM_ALU_RESULT = aluRes;
+    /*think need to set condition codes for NEW_PS.MEM_CC*/
+    NEW_PS.MEM_IR = PS.AGEX_IR;
+    NEW_PS.MEM_DRID = PS.AGEX_DRID;
+    NEW_PS.MEM_V = 1;
 
 
     /* The code below propagates the control signals from AGEX.CS latch
