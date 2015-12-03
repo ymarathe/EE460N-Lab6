@@ -1366,13 +1366,42 @@ void DE_stage() {
 			         at the figure for DE stage */ 
   int ir = PS.DE_IR;
   CONTROL_STORE_ADDRESS = ((ir >> 10) & 0x3E) + ((ir >> 5) & 0x1);
+  
   int ii, jj = 0;
   int LD_AGEX; /* You need to write code to compute the value of
 		  LD.AGEX signal */
 
   /* your code for DE stage goes here */
-
-  
+  if(PS.DE_V == 0)
+  {
+  	LD_AGEX=0
+  }
+  else
+  {
+  	if(Get_DE_BR_STALL(CONTROL_STORE[CONTROL_STORE_ADDRESS]) == 1)
+  	{
+  		v_de_br_stall=1;
+  	}
+  	else
+  	{
+  		v_de_br_stall=0;
+  	}
+  }
+  int needSR1 = Get_SR1_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
+  int SR1Id = (ir >> 6) & 0x7;
+  int need SR2 = Get_SR2_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
+  int SR2IdMux;
+  int SR2Id;
+  int drMux = Get_DRMUX(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
+  int drId;
+  if(drMux == 0)
+  {
+  	drId = (ir >> 9) & 0x7;
+  }
+  else if(drMUc == 1)
+  {
+  	drId = 7;
+  }
 
 
 
@@ -1380,7 +1409,10 @@ void DE_stage() {
     /* Your code for latching into AGEX latches goes here */
     NEW_PS.AGEX_NPC = PS.DE_NPC;
     NEW_PS.AGEX_IR = PS.DE_IR;
-    
+    NEW_PS.AGEX_DRID = drId;
+    NEW_PS.AGEX_SR1 = REGS[SR1Id];
+    NEW_PS.AGEX_SR2 = REGS[SR2ID];
+    NEW_PS.AGEX_CC = P + (Z << 1) + (N << 2);
 
 
 
