@@ -1174,6 +1174,61 @@ void AGEX_stage() {
   }
 
   /* your code for AGEX stage goes here */
+  
+  /*actual calculation stuff here*/
+  int addr1Mux = Get_ADDR1MUX(PS.AGEX_CS);
+  int addr1;
+  if(addr1Mux == 0)
+  {
+  	/*next pc*/
+  	addr1 = PS.AGEX_NPC;
+  }
+  else if(addr1Mux == 1)
+  {
+  	/*base register*/
+  	addr1 = PS.AGEX_SR1;
+  }
+  
+  int addr2Mux = Get_ADDR2MUX(PS.AGEX_CS);
+  int addr2;
+  int ir = PS.AGEX_IR;
+  if(addr2Mux == 0)
+  {
+  	/*zero*/
+  	addr2 = 0;
+  }
+  else if(addr2Mux == 1)
+  {
+  	/*SEXT(IR[5:0])*/
+  	addr2 = ir & 0x3F;
+  	if((addr2 & 0x20) != 0)
+  	{
+  		/*need to do sign extension*/
+  		addr2 = 0xFFC0 + addr2;
+  	}
+  }
+  else if(addr2Mux == 2)
+  {
+  	/*SEXT(IR[8:0])*/
+  	addr2 = ir & 0x1FF;
+  	if((addr2 & 0x100) != 0)
+  	{
+  		/*need to do sign extension*/
+  		addr2 = 0xFE00 + addr2;
+  	}
+  }
+  else if(addr2Mux == 3)
+  {
+  	/*SEXT(IR[10:0])*/
+  	addr2 = ir & 0x7FF;
+  	if((addr2 & 0x400) != 0)
+  	{
+  		/*need to do sign extension*/
+  		addr2 = 0xF800 + addr2;
+  	}
+  }
+  
+  /*2nd logic block*/
   int LD_CC = Get_AGEX_LD_CC(PS.AGEX_CS);
   int LD_REG = Get_AGEX_LD_REG(PS.AGEX_CS);
   int BR_STALL = Get_AGEX_BR_STALL(PS.AGEX_CS);
