@@ -1327,12 +1327,7 @@ void AGEX_stage() {
   	/*ALU*/
   	aluRes = aluOpRes;
   }
-  
-  
-  
-  
-   
-  
+ 
   /*2nd logic block*/
   int LD_CC = Get_AGEX_LD_CC(PS.AGEX_CS);
   int LD_REG = Get_AGEX_LD_REG(PS.AGEX_CS);
@@ -1369,6 +1364,8 @@ void DE_stage() {
   int CONTROL_STORE_ADDRESS;  /* You need to implement the logic to
 			         set the value of this variable. Look
 			         at the figure for DE stage */ 
+  int ir = PS.DE_IR;
+  CONTROL_STORE_ADDRESS = ((ir >> 10) & 0x3E) + ((ir >> 5) & 0x1);
   int ii, jj = 0;
   int LD_AGEX; /* You need to write code to compute the value of
 		  LD.AGEX signal */
@@ -1381,6 +1378,8 @@ void DE_stage() {
 
   if (LD_AGEX) {
     /* Your code for latching into AGEX latches goes here */
+    NEW_PS.AGEX_NPC = PS.DE_NPC;
+    NEW_PS.AGEX_IR = PS.DE_IR;
     
 
 
