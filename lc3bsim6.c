@@ -1227,6 +1227,27 @@ void AGEX_stage() {
   		addr2 = 0xF800 + addr2;
   	}
   }
+  int shift = Get_LSHF1(PS.AGEX_CS);
+  if(shift == 1)
+  {
+  	addr2 = addr2 << 1;
+  }
+  int addrRes = addr1 + addr2;
+  int addressMux = Get_ADDRESSMUX(PS.AGEX_CS);
+  int address;
+  if(addressMux == 0)
+  {
+  	address = (ir & 0xFF) << 1;
+  }
+  else if(addressMux == 1)
+  {
+  	address = addrRes;
+  }
+  int SR1 = PS.AGEX_SR1;
+  int SR2 = PS.AGEX_SR2;
+  
+  
+  
   
   /*2nd logic block*/
   int LD_CC = Get_AGEX_LD_CC(PS.AGEX_CS);
