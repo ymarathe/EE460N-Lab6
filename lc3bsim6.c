@@ -1276,7 +1276,8 @@ void AGEX_stage() {
   }
   else if(ALUK == 3)
   {
-  	/*PASSB ???*/
+  	/*PASSB, ie SR2*/
+  	aluOpRes = SR2;
   }
   
   int aluResMux = Get_ALU_RESULTMUX(PS.AGEX_CS);
