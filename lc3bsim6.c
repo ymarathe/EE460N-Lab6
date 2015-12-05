@@ -986,7 +986,7 @@ void MEM_stage() {
   	/*need to do sign extending and shiftinh for full word accesses???, think yes*/
   	int readData=0;
   	/*need to edit amount of data passes in for byte accesses*/
-  	dcache_access(PS.MEM_ADDRESS, readData, PS.MEM_ALU_RESULT, dcache_r, WE0, WE1);
+  	dcache_access(PS.MEM_ADDRESS, &readData, PS.MEM_ALU_RESULT, &dcache_r, WE0, WE1);
   	if(dcache_r==0)
   	{
   		/*couldn't finish reading/writing cache, stuck in mem stage*/
