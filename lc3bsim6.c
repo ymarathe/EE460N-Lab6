@@ -1775,16 +1775,20 @@ void DE_stage() {
   }
   
   /*add stuff to write to registers and stuff here?*/
-  if(v_sr_ld_reg==1)
+  if(PS.SR_V==1)
   {
-  	REGS[sr_reg_id] = sr_reg_data;
+  	if(v_sr_ld_reg==1)
+  	{
+  		REGS[sr_reg_id] = sr_reg_data;
+  	}
+  	if(v_sr_ld_cc==1)
+  	{
+  		N = sr_n;
+  		Z = sr_z; 
+  		P = sr_p;
+  	}
   }
-  if(v_sr_ld_cc==1)
-  {
-  	N = sr_n;
-  	Z = sr_z; 
-  	P = sr_p;
-  }
+  
 }
 
 
