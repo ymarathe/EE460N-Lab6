@@ -1375,7 +1375,7 @@ void AGEX_stage() {
     NEW_PS.MEM_ADDRESS = address;
     NEW_PS.MEM_NPC = PS.AGEX_NPC;
     NEW_PS.MEM_ALU_RESULT = aluRes;
-    /*think need to set condition codes for NEW_PS.MEM_CC*/
+    NEW_PS.MEM_CC = PS.AGEX_CC;
     NEW_PS.MEM_IR = PS.AGEX_IR;
     NEW_PS.MEM_DRID = PS.AGEX_DRID;
     NEW_PS.MEM_V = 1;
@@ -1433,9 +1433,19 @@ void DE_stage() {
   
   if(PS.DE_V == 0)
   {
-  	/*currently holds a bubble, pass on that bubble*/
-  	LD_AGEX=1;
-  	agexV = 0;
+  	/*currently holds a bubble*/
+  	if(mem_stall==0)
+  	{
+  		/*pass on the bubble*/
+  		LD_AGEX=1;
+  		agexV = 0;	
+  	}
+  	else
+  	{
+  		/*memory is stalled, do not pass on the bubble*/
+  		LD_AGEX=0;
+  		agexV=0;
+  	}
   }
   else
   {
@@ -1444,30 +1454,171 @@ void DE_stage() {
   	{
   		/*is a valid branch instruction*/
   		v_de_br_stall=1;
-  		if(Get_UNCOND_OP(CONTROL_STORE[CONTROL_STORE_ADDRESS]) != 1)
+  		if(Get_DE_BR_OP(CONTROL_STORE[CONTROL_STORE_ADDRESS]) == 1)
   		{
   			/*conditional branch, need to check if any depencies on condition codes in further stages*/
   			if(Get_AGEX_LD_CC(PS.AGEX_CS)==1 || Get_MEM_LD_CC(PS.MEM_CS)==1 || Get_SR_LD_CC(PS.SR_CS)==1)
   			{
   				/*depends on condition codes from further stage*/
   				dep_stall=1;
-  				agexV=0;
-  				LD_AGEX=1;
+  				if(mem_stall==0)
+  				{
+  					/*stalled on condition codes, send bubbles down*/
+  					LD_AGEX=1;
+  					agexV=0;
+  				}
+  				else
+  				{
+  					/*stalled also in memory, do not send down bubbles*/
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
   			}
   			else
   			{
   				/*no dependencies on conditional codes*/
   				dep_stall=0;
-  				agexV=1;
-  				LD_AGEX=1
+  				if(mem_stall==0)
+  				{
+  					/*no stalls here or futher down*/
+  					LD_AGEX=1;
+  					agexV=1;
+  				}
+  				else
+  				{
+  					/*stalled further down in memory, do not load AGEX*/
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
   			}
   		}
   		else
   		{
-  			/*unconditional branch, pass on branch values to the AGEX stage*/
-  			dep_stall=0;
-  			agexV=1;
-  			LD_AGEX=1;
+  			/*trap or uncond op*/
+  			if(needSR1 == 1)
+  			{
+  				/*DE needs SR1*/
+  				if((PS.AGEX_DRID == SR1Id && Get_AGEX_LD_REG(PS.AGEX_CS)==1) || (PS.MEM_DRID == SR1Id && Get_MEM_LD_REG(PS.MEM_CS)==1) || (PS.SR_DRID == SR1Id && Get_SR_LD_REG(PS.SR_CS)==1))
+  				{
+  					/*another stage will be writing to SR1, add dependency bubble*/
+  					dep_stall = 1;
+  					if(mem_stall == 0)
+  					{
+  						LD_AGEX = 1;
+  						agexV = 0;	
+  					}
+  					else
+  					{
+  						LD_AGEX=0;
+  						agexV=0;
+  					}
+  					
+  				}
+  				else if(needSR2 == 1)
+  				{
+  					/*no dependency on SR1, DE needs SR2*/
+  					if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)==1) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)==1) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)==1))
+  					{
+  						/*another stage will be writing to SR2, add dependency bubble*/
+  						dep_stall = 1;
+  						if(mem_stall==0)
+  						{
+  							LD_AGEX=1;
+  							agexV=0;
+  						}
+  						else
+  						{
+  							LD_AGEX=0;
+  							agexV=0;
+  						}
+
+  					}
+  					else
+  					{
+  						/*no dependency on SR2*/
+  						dep_stall = 0;
+  						if(mem_stall==0)
+  						{
+  							LD_AGEX = 1;
+  							agexV = 1;
+  						}
+  						else
+  						{
+  							LD_AGEX=0;
+  							agexV=0;
+  						}
+  						
+  					}
+  				}
+  				else if(needSR2 == 0)
+  				{
+  					/*no dependency on SR1, DE doesn't need SR2*/
+  					dep_stall = 0;
+  					if(mem_stall == 0)
+  					{
+  						LD_AGEX = 1;
+  						agexV = 1;	
+  					}
+  					else
+  					{
+  						LD_AGEX=0;
+  						agexV=0;
+  					}
+  					
+  				}
+  			}
+  			else if(needSR2 == 1)
+  			{
+  				/*DE needs SR2*/
+  				if((PS.AGEX_DRID == SR2Id && Get_AGEX_LD_REG(PS.AGEX_CS)==1) || (PS.MEM_DRID == SR2Id && Get_MEM_LD_REG(PS.MEM_CS)==1) || (PS.SR_DRID == SR2Id && Get_SR_LD_REG(PS.SR_CS)==1))
+  				{
+  					/*another stage will write to SR2, add dependency bubble*/
+  					dep_stall = 1;
+  					if(mem_stall==0)
+  					{
+  						LD_AGEX=1;
+  						agexV=0;
+  					}
+  					else
+  					{
+  						LD_AGEX=0;
+  						agexV=0;
+  					}
+  					
+  				}
+  				else
+  				{
+  					/*no dependency on SR2*/
+  					dep_stall = 0;
+  					if(mem_stall == 0)
+  					{
+  						LD_AGEX = 1;
+  						agexV = 1;
+  					}
+  					else
+  					{
+  						LD_AGEX=0;
+  						agexV=0;
+  					}
+  					
+  				}
+  			}
+  			else
+  			{
+  				/*DE doesn't need SR1 or SR2*/
+  				dep_stall = 0;
+  				if(mem_stall == 0)
+  				{
+  					LD_AGEX=1;
+  					agexV=1;
+  				}
+  				else
+  				{
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
+  					
+  			}
   		}
   	}
   	else
@@ -1481,8 +1632,17 @@ void DE_stage() {
   			{
   				/*another stage will be writing to SR1, add dependency bubble*/
   				dep_stall = 1;
-  				LD_AGEX = 1;
-  				agexV = 0;
+  				if(mem_stall==0)
+  				{
+  					LD_AGEX = 1;
+  					agexV = 0;	
+  				}
+  				else
+  				{
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
+  				
   			}
   			else if(needSR2 == 1)
   			{
@@ -1491,23 +1651,50 @@ void DE_stage() {
   				{
   					/*another stage will be writing to SR2, add dependency bubble*/
   					dep_stall = 1;
-  					LD_AGEX=1;
-  					agexV=0;
+  					if(mem_stall==0)
+  					{
+  						LD_AGEX=1;
+  						agexV=0;
+  					}
+  					else
+  					{
+  						LD_AGEX=0;
+  						agexV=0;
+  					}
+  					
   				}
   				else
   				{
   					/*no dependency on SR2*/
   					dep_stall = 0;
-  					LD_AGEX = 1;
-  					agexV = 1;
+  					if(mem_stall==0)
+  					{
+  						LD_AGEX = 1;
+  						agexV = 1;
+  					}
+  					else
+  					{
+  						LD_AGEX=0;
+  						agexV=0;
+  					}
+  					
   				}
   			}
   			else if(needSR2 == 0)
   			{
   				/*no dependency on SR1, DE doesn't need SR2*/
   				dep_stall = 0;
-  				LD_AGEX = 1;
-  				agexV = 1;
+  				if(mem_stall==0)
+  				{
+  					LD_AGEX = 1;
+  					agexV = 1;
+  				}
+  				else
+  				{
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
+  				
   			}
   		}
   		else if(needSR2 == 1)
@@ -1517,28 +1704,54 @@ void DE_stage() {
   			{
   				/*another stage will write to SR2, add dependency bubble*/
   				dep_stall = 1;
-  				LD_AGEX=1;
-  				agexV=0;
+  				if(mem_stall==0)
+  				{
+  					LD_AGEX=1;
+  					agexV=0;
+  				}
+  				else
+  				{
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
+  				
   			}
   			else
   			{
   				/*no dependency on SR2*/
   				dep_stall = 0;
-  				LD_AGEX = 1;
-  				agexV = 1;
+  				if(mem_stall==0)
+  				{
+  					LD_AGEX = 1;
+  					agexV = 1;
+  				}
+  				else
+  				{
+  					LD_AGEX=0;
+  					agexV=0;
+  				}
+  				
   			}
   		}
   		else
   		{
   			/*DE doesn;t need SR1 or SR2*/
   			dep_stall = 0;
-  			LD_AGEX=1;
-  			agexV=1;	
+  			if(mem_stall==0)
+  			{
+  				LD_AGEX=1;
+  				agexV=1;
+  			}
+  			else
+  			{
+  				LD_AGEX=0;
+  				agexV=0;
+  			}
+  				
   		}
   		
   	}
   }
-
 
   if (LD_AGEX) {
     /* Your code for latching into AGEX latches goes here */
@@ -1558,6 +1771,8 @@ void DE_stage() {
       NEW_PS.AGEX_CS[jj++] = CONTROL_STORE[CONTROL_STORE_ADDRESS][ii];
     }
   }
+  
+  /*add stuff to write to registers and stuff here?*/
 
 }
 
@@ -1593,7 +1808,21 @@ void FETCH_stage() {
   }
   int instr = 0;
   icache_access(PC,&instr,&icache_r);
-  if(v_de_br_stall==1 || v_agex_br_stall==1 || v_mem_br_stall==1)
+  if(mem_stall==1)
+  {
+  	/*memory not able to progress, don't load DE with anything and don't fetch anything new*/
+  	LD_DE=0;
+  	LD_PC=0;
+  	DEVal=0;
+  }
+  else if(dep_stall==1)
+  {
+  	/*DE isn't able to progress, don't load it with anything and don't fetch anything new*/
+  	LD_DE=0;
+  	LD_PC=0
+  	DEVal=0;
+  }
+  else if(v_de_br_stall==1 || v_agex_br_stall==1 || v_mem_br_stall==1)
   {
   	/*Fetch not able to progress*/
   	/*need to stall because of contol instruction farther down the pipeline, load DE with a bubble*/
@@ -1610,20 +1839,6 @@ void FETCH_stage() {
   	LD_DE=1;
   	/*since stalling, won't process instr from updated PC, can't load PC*/
   	LD_PC=0;
-  }
-  else if(dep_stall==1)
-  {
-  	/*DE isn't able to progress, don't load it with anything and don't fetch anything new*/
-  	LD_DE=0;
-  	LD_PC=0
-  	DEVal=0;
-  }
-  else if(mem_stall==1)
-  {
-  	/*memory not able to progress, don't load DE with anything and don't fetch anything new*/
-  	LD_DE=0;
-  	LD_PC=0;
-  	DEVal=0;
   }
   else
   {
