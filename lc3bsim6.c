@@ -1844,7 +1844,7 @@ void FETCH_stage() {
   	/*need to stall because of contol instruction farther down the pipeline, load DE with a bubble*/
   	DEVal=0;
   	LD_DE=1;
-  	if(v_de_br_stall== && v_agex_br_stall==0 && v_agex_br_stall==1)
+  	if(v_de_br_stall==0 && v_agex_br_stall==0 && v_agex_br_stall==1)
   	{
   		LD_PC=1;
   	}
