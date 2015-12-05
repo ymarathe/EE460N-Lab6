@@ -956,6 +956,7 @@ void MEM_stage() {
   int WE1 = 0;
   int dcache_r=0;
   target_pc = PS.MEM_ADDRESS;
+  int readData=0;
   if(DCACHE_EN == 1 && PS.MEM_V)
   {
   	/*valid memory instruction*/
@@ -984,7 +985,7 @@ void MEM_stage() {
   		}
   	}
   	/*need to do sign extending and shiftinh for full word accesses???, think yes*/
-  	int readData=0;
+  	
   	/*need to edit amount of data passes in for byte accesses*/
   	dcache_access(PS.MEM_ADDRESS, &readData, PS.MEM_ALU_RESULT, &dcache_r, WE0, WE1);
   	if(dcache_r==0)
@@ -1342,7 +1343,8 @@ void AGEX_stage() {
   		{
   			/*need do something to make it an arithmetic shift*/
   			int k=1;
-  			for(int i=1;i<shftAmount;i++)
+  			int i=1;
+  			for(i=1;i<shftAmount;i++)
   			{
   				k = k*2;
   			}
