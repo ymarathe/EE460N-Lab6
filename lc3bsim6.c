@@ -1448,6 +1448,7 @@ void DE_stage() {
   		LD_AGEX=0;
   		agexV=0;
   	}
+  	v_de_br_stall=0;
   }
   else
   {
