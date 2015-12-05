@@ -1810,7 +1810,7 @@ void FETCH_stage() {
   	 break;
   	/*PC=TARGET.PC*/
   	case 1:
-  	 pcmux_res = taget_pc;
+  	 pcmux_res = target_pc;
   	 break;
   	/*PC=TRAP.PC*/
   	case 2:
@@ -1830,7 +1830,7 @@ void FETCH_stage() {
   {
   	/*DE isn't able to progress, don't load it with anything and don't fetch anything new*/
   	LD_DE=0;
-  	LD_PC=0
+  	LD_PC=0;
   	DEVal=0;
   }
   else if(v_de_br_stall==1 || v_agex_br_stall==1 || v_mem_br_stall==1)
