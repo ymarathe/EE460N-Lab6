@@ -1420,7 +1420,7 @@ void DE_stage() {
   }
   else
   {
-  	SR2Id = (id >> 9) & 0x7;
+  	SR2Id = (ir >> 9) & 0x7;
   }
   int drMux = Get_DRMUX(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
   int drId;
@@ -1761,7 +1761,7 @@ void DE_stage() {
     NEW_PS.AGEX_IR = PS.DE_IR;
     NEW_PS.AGEX_DRID = drId;
     NEW_PS.AGEX_SR1 = REGS[SR1Id];
-    NEW_PS.AGEX_SR2 = REGS[SR2ID];
+    NEW_PS.AGEX_SR2 = REGS[SR2Id];
     NEW_PS.AGEX_CC = P + (Z << 1) + (N << 2);
     NEW_PS.AGEX_V = agexV;
 
