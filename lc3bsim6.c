@@ -1870,7 +1870,7 @@ void FETCH_stage() {
   if(LD_DE==1)
   {
   	/*need to check if should be oldPC + 2 or PC + 2*/
-  	NEW_PS.DE_NPC = PC;
+  	NEW_PS.DE_NPC = PC+2;
   	NEW_PS.DE_IR = instr;
   	NEW_PS.DE_V = DEVal;
   }
