@@ -1200,15 +1200,14 @@ void AGEX_stage() {
 		 signal */
 		 
   /*load memory latches as long as valid instruction in AGEX stage?*/
-  if(PS.AGEX_V == 1)
+  if(mem_stall==1)
   {
-  	/*should load mem latches?*/
-  	LD_MEM = 1;
+  	/*memory is stuck, shouldn't load stuff into it*/
+  	LD_MEM=0;
   }
   else
   {
-  	/*definitely shouldn't load mem latches*/
-  	LD_MEM = 0;
+  	LD_MEM=1;
   }
 
   /* your code for AGEX stage goes here */
@@ -1338,10 +1337,21 @@ void AGEX_stage() {
   	else if(shftType == 3)
   	{
   		/*right shift arithmetic*/
-  		aluRes = Low16bits(SR1 >> shftAmount);
+  		
   		if((SR1 & 0x8000) != 0)
   		{
   			/*need do something to make it an arithmetic shift*/
+  			int k=1;
+  			for(int i=1;i<shftAmount;i++)
+  			{
+  				k = k*2;
+  			}
+  			k = k << (16-shftAmount);
+  			aluRes = Low16bits(k + (SR1 >> shftAmount));
+  		}
+  		else
+  		{
+  			aluRes = Low16bits(SR1 >> shftAmount);
   		}
   	}
   }
@@ -1356,9 +1366,9 @@ void AGEX_stage() {
   int LD_REG = Get_AGEX_LD_REG(PS.AGEX_CS);
   int BR_STALL = Get_AGEX_BR_STALL(PS.AGEX_CS);
   
-  v_agex_ld_cc = LD_CC;
-  v_agex_ld_reg = LD_REG;
-  v_agex_br_stall = BR_STALL;
+  v_agex_ld_cc = LD_CC & PS.AGEX_V;
+  v_agex_ld_reg = LD_REG & PS.AGEX_V;
+  v_agex_br_stall = BR_STALL & PS.AGEX_V;
 
   if (LD_MEM) {
     /* Your code for latching into MEM latches goes here */
@@ -1399,8 +1409,17 @@ void DE_stage() {
   int needSR1 = Get_SR1_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
   int SR1Id = (ir >> 6) & 0x7;
   int needSR2 = Get_SR2_NEEDED(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
-  int SR2IdMux; /*use IR[13]*/
+  int SR2IdMux = (ir >> 13) & 0x1; /*use IR[13]*/
   int SR2Id;
+  if(SR2IdMux==0)
+  {
+  	/*IR[2:0]*/
+  	SR2Id = ir & 0x7;
+  }
+  else
+  {
+  	SR2Id = (id >> 9) & 0x7;
+  }
   int drMux = Get_DRMUX(CONTROL_STORE[CONTROL_STORE_ADDRESS]);
   int drId;
   if(drMux == 0)
