@@ -958,8 +958,10 @@ void MEM_stage() {
   target_pc = PS.MEM_ADDRESS;
   if(DCACHE_EN == 1 && PS.MEM_V)
   {
+  	/*valid memory instruction*/
   	if(DCACHE_RW!=0)
   	{
+  		/*write instruction*/
   		if(DATA_SIZE==1)
   		{
   			/*writing a full word*/
@@ -971,46 +973,55 @@ void MEM_stage() {
   			/*writing a single byte*/
   			if((PS.MEM_ADDRESS & 0x01) == 1)
   			{
+  				/*writing uper half*/
   				WE1=1;
   			}
   			else
   			{
+  				/*writing loweer half*/
   				WE0=1;
   			}
   		}
   	}
-  	/*need to do sign extending and shiftinh for full word accesses???*/
-  	int readData;
+  	/*need to do sign extending and shiftinh for full word accesses???, think yes*/
+  	int readData=0;
+  	/*need to edit amount of data passes in for byte accesses*/
   	dcache_access(PS.MEM_ADDRESS, readData, PS.MEM_ALU_RESULT, dcache_r, WE0, WE1);
   	if(dcache_r==0)
   	{
+  		/*couldn't finish reading/writing cache, stuck in mem stage*/
   		mem_stall=1;
   		NEW_PS.SR_V = 0;
   	}
   	else
   	{
+  		/*finished reading/writing cache, can proceed out of mem stage*/
+  		mem_stall=0;
   		NEW_PS.SR_V = 1;
   		if(DATA_SIZE==0 && DCACHE_RW==0)
   		{
-  			//need to sign extend data
-  			if((dcache_r & 0x80) != 0)
+  			/*single byte read, need to sign extend data*/
+  			if((readData & 0x80) != 0)
   			{
-  				//was a negative number, need to sign extend, check if this correct way to sign extend??
-  				dcache_r = 0xFF00 + dcache_r;
+  				/*was a negative number, correct way to sign extend*/
+  				readData = 0xFF00 + readData;
   			}
   		}
-  		/*need to put read data into SR_DATA???*/
   		if(DCACHE_RW==0)
   		{
-  			NEW_PS.SR_DATA = readData;
+  			/*was a read, send data to SR stage*/
+  			NEW_PS.SR_DATA = Low16bits(readData);
   		}
-  		
   	}
-  	
   }
   else if(PS.MEM_V == 1)
   {
+  	/*valid non memory instruction*/
   	NEW_PS.SR_V = 1;
+  }
+  else
+  {
+  	NEW_PS.SR_V=0;
   }
   int BR_OP = Get_BR_OP(PS.MEM_CS);
   int UNCON_OP = Get_UNCOND_OP(PS.MEM_CS);
@@ -1022,13 +1033,15 @@ void MEM_stage() {
   /*logic for generating MEM_PCMUX*/
   if(PS.MEM_V==1)
   {
-  	/*if a valid memory instruction*/
+  	/*a valid instruction*/
   	if(BR_STALL==1)
   	{
+  		/*a control instruction*/
   		v_mem_br_stall = 1;
   	}
   	else
   	{
+  		/*not a control instruction*/
   		v_mem_br_stall = 0;
   	}
   	
@@ -1040,9 +1053,11 @@ void MEM_stage() {
   		switch(brInstr)
   		{
   			case 0:
+  				/*never branch, do PC+2*/
   				MEM_PCMUX = 0;
   				break;
   			case 1:
+  				/*branch if positive*/
   				if((PS.MEM_CC & 0x1) !=0)
   				{
   					MEM_PCMUX = 1;
@@ -1053,6 +1068,7 @@ void MEM_stage() {
   				}
   				break;
   			case 2:
+  				/*branch if zero*/
   				if((PS.MEM_CC & 0x2) !=0)
   				{
   					MEM_PCMUX = 1;
@@ -1063,6 +1079,7 @@ void MEM_stage() {
   				}
   				break;
   			case 3:
+  				/*branch if zero or positive*/
   				if((PS.MEM_CC & 0x3) !=0)
   				{
   					MEM_PCMUX = 1;
@@ -1073,6 +1090,7 @@ void MEM_stage() {
   				}
   				break;
   			case 4:
+  				/*branch if negative*/
   				if((PS.MEM_CC & 0x4) !=0)
   				{
   					MEM_PCMUX = 1;
@@ -1083,6 +1101,7 @@ void MEM_stage() {
   				}
   				break;
   			case 5:
+  				/*branch if negative or positive*/
   				if((PS.MEM_CC & 0x5) !=0)
   				{
   					MEM_PCMUX = 1;
@@ -1093,6 +1112,7 @@ void MEM_stage() {
   				}
   				break;
   			case 6:
+  				/*branch if negative or zero*/
   				if((PS.MEM_CC & 0x6) !=0)
   				{
   					MEM_PCMUX = 1;
@@ -1103,7 +1123,8 @@ void MEM_stage() {
   				}
   				break;
   			case 7:
-  				MEM_PCMUX = 0;
+  				/*always branch*/
+  				MEM_PCMUX = 1;
   				break;
   		}
   	}
@@ -1116,7 +1137,7 @@ void MEM_stage() {
   	{
   		/*trap instruction*/
   		MEM_PCMUX = 2;
-  		trap_pc = readData
+  		trap_pc = Low16bits(readData);
   	}
   	else
   	{
@@ -1127,6 +1148,7 @@ void MEM_stage() {
   	if(LD_REG == 1)
   	{
   		v_mem_ld_reg = 1;
+  		/*can't actually load registers here???*/
   	}
   	else
   	{
@@ -1135,7 +1157,8 @@ void MEM_stage() {
   	
   	if(LD_CC == 1)
   	{
-  		v_mem_ld_cc = 1;	
+  		v_mem_ld_cc = 1;
+  		/*can't actually set condition codes here?*/
   	}
   	else
   	{
@@ -1155,7 +1178,7 @@ void MEM_stage() {
      to SR.CS latch. You still need to latch other values into the
      other SR latches. */
      NEW_PS.SR_ADDRESS = PS.MEM_ADDRESS;
-     NEW_PS.SR_DATA = readData;
+     NEW_PS.SR_DATA = Low16bits(readData);
      NEW_PS.SR_NPC = PS.MEM_NPC;
      NEW_PS.SR_ALU_RESULT = PS.MEM_ALU_RESULT;
      NEW_PS.SR_IR = PS.MEM_IR;
