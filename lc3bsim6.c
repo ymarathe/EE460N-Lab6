@@ -1380,7 +1380,7 @@ void AGEX_stage() {
     NEW_PS.MEM_CC = PS.AGEX_CC;
     NEW_PS.MEM_IR = PS.AGEX_IR;
     NEW_PS.MEM_DRID = PS.AGEX_DRID;
-    NEW_PS.MEM_V = 1;
+    NEW_PS.MEM_V = PS.AGEX_V;
 
 
     /* The code below propagates the control signals from AGEX.CS latch
