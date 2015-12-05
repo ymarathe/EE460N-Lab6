@@ -1871,7 +1871,7 @@ void FETCH_stage() {
   {
   	/*need to check if should be oldPC + 2 or PC + 2*/
   	NEW_PS.DE_V = DEVal;
-  	if(DEVal==0)
+  	if(pcmux_res==0)
   	{
   		NEW_PS.DE_NPC = PS.DE_NPC;
   	}
