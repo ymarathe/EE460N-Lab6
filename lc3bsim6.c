@@ -1844,8 +1844,7 @@ void FETCH_stage() {
   	/*need to stall because of contol instruction farther down the pipeline, load DE with a bubble*/
   	DEVal=0;
   	LD_DE=1;
-  	/*since stalling, won't process instr from updated PC, can't load PC*/
-  	LD_PC=0;
+  	LD_PC=1;
   }
   else if(icache_r==0)
   {
