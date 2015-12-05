@@ -1838,13 +1838,21 @@ void FETCH_stage() {
   	LD_PC=0;
   	DEVal=0;
   }
-  else if(v_de_br_stall==1 || v_agex_br_stall==1)
+  else if(v_de_br_stall==1 || v_agex_br_stall==1 || v_agex_br_stall==1)
   {
   	/*Fetch not able to progress*/
   	/*need to stall because of contol instruction farther down the pipeline, load DE with a bubble*/
   	DEVal=0;
   	LD_DE=1;
-  	LD_PC=0;
+  	if(v_de_br_stall== && v_agex_br_stall==0 && v_agex_br_stall==1)
+  	{
+  		LD_PC=1;
+  	}
+  	else
+  	{
+  		LD_PC=0;
+  	}
+  	
   }
   else if(icache_r==0)
   {
@@ -1871,14 +1879,7 @@ void FETCH_stage() {
   {
   	/*need to check if should be oldPC + 2 or PC + 2*/
   	NEW_PS.DE_V = DEVal;
-  	if(v_de_br_stall==1 || v_agex_br_stall==1 || v_mem_br_stall==1)
-  	{
-  		NEW_PS.DE_NPC = PS.DE_NPC;
-  	}
-  	else
-  	{
-  		NEW_PS.DE_NPC = pcmux_res;
-  	}
+  	NEW_PS.DE_NPC = pcmux_res;
   		
   	NEW_PS.DE_IR = instr;
   	
